@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\LiveChat1.props" />
+</Project>

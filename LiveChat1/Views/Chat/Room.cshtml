@@ -1,0 +1,70 @@
+﻿@model int
+
+<div class="container mt-5">
+    <h1 class="text-center">
+        Sala de Chat - @LiveChat1.Controllers.ChatController.Rooms.GetValueOrDefault(Model)
+    </h1>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="Usuario" id="user">
+                <input type="text" class="form-control" placeholder="Texto" id="message">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" id="btnSend">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">Mensajes</div>
+                <div class="card-body" id="messages"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">Notificaciones</div>
+                <div class="card-body" id="notifications"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/chat").build();
+
+    connection.start().then(()=>{
+        connection.invoke("AddToGroup", "@Model")
+    }).catch((e)=> console.error(e));
+
+    document.getElementById("btnSend").addEventListener("click",(event) => {
+
+        let room = "@Model";
+        let user = document.getElementById("user").value;
+        let message = document.getElementById("message").value;
+
+        connection.invoke("SendMessage", room, user, message)
+            .catch((err) => console.error(err.toString()));
+
+        document.getElementById("message").value = "";
+        document.getElementById("message").focus();
+      
+        event.preventDefault();
+    })
+
+    connection.on("ReceiveMessage", (user, message) => {
+        var message = "<div><b>" + user + " dijo:<b> " + message + "</div>";
+        document.getElementById("messages").innerHTML=
+            message + document.getElementById("messages").innerHTML;
+    });
+
+    connection.on("ShowPerson", (message) => {
+        var message = "<div><b>" + message + "</b></div>";
+        document.getElementById("notifications").innerHTML =
+            message + document.getElementById("notifications").innerHTML;
+    });
+</script>
